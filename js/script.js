@@ -1,45 +1,100 @@
 class TodoList {
   constructor() {
-    this.tasks = []; // Array para armazenar todas as tarefas
-    this.taskInput = document.getElementById("taskInput"); //Input para adicionar tarefas
-    this.addBtn = document.getElementById("addBtn"); //Botão para adicionar tarefas
-    this.tasksList = document.getElementById("tasksList"); //Container para exibir a lista de tarefas
+    this.tasks = []; // Array que armazena todas as tarefas
+    this.taskInput = document.getElementById("taskInput"); // Input de texto
+    this.addBtn = document.getElementById("addBtn"); // Botão adicionar
+    this.tasksList = document.getElementById("tasksList"); // Container das tarefas
 
-    this.init(); //Inicialização da aplicação
+    this.init(); // Inicializa a aplicação
   }
 
   init() {
-    //Adiciona um evento de clique ao botão de adicionar tarefa
+    // Event listener para botão "Adicionar"
     this.addBtn.addEventListener("click", () => this.addTask());
 
-    //Adiciona um evento de tecla pressionada ao input de tarefa
-    //Quando o usuário estiver digitando no input e apertar Enter, execute a função que adiciona a tarefa.”
-    this.taskInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") this.addTask();
+    // Event listener para Enter no input
+    this.taskInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        this.addTask();
+      }
     });
 
-    //Carrega as tarefas salvas
+    // Carrega tarefas salvas
     this.loadTasks();
   }
 
   addTask() {
-    const text = this.taskInput.value.trim(); //Pego o texto e removo os espaços em branco
+    const text = this.taskInput.value.trim(); // Pega texto e remove espaços
 
     if (text === "") {
-      //Se o texto for vazio não adicione a tarefa ao array
-      this.taskInput.focus(); //Foca no Input se está vazio
+      // Validação
+      this.taskInput.focus(); // Foca no input se vazio
       return;
     }
 
     const task = {
-      id: Date.now(), //Gerando um ID único baseado em timestamp para cada tarefa
-      text, //Pegando o texto digitado pelo usuário
+      id: Date.now(), // ID único baseado em timestamp
+      text: text,
     };
 
-    this.tasks.unshift(task); //Adiciona a tarefa ao inicio do array
-    this.taskInput.value = ""; //Limpa o input
-    this.taskInput.focus(); //Foca no Input
-    this.render(); //Atualiza tela
-    this.saveTasks(); //Salva no localStorage
+    this.tasks.unshift(task); // Adiciona no INÍCIO do array
+    this.taskInput.value = ""; // Limpa input
+    this.taskInput.focus(); // Mantém foco no input
+    this.render(); // Atualiza tela
+    this.saveTasks(); // Salva no localStorage
+  }
+
+  deleteTask(id) {
+    this.tasks = this.tasks.filter((task) => task.id !== id); // Filtra removendo ID
+    this.render(); // Atualiza tela
+    this.saveTasks(); // Salva mudanças
+  }
+
+  render() {
+    if (this.tasks.length === 0) {
+      // Estado vazio - mostra mensagem
+      this.tasksList.innerHTML = `
+            <div class="empty-state">
+                Nenhuma tarefa ainda... 😴<br>
+                Adicione a primeira tarefa!
+            </div>
+        `;
+      return;
+    }
+
+    // Gera HTML para TODAS as tarefas
+    this.tasksList.innerHTML = this.tasks
+      .map(
+        (task) => `
+        <div class="task-item">
+            <span class="task-text">${this.escapeHtml(task.text)}</span>
+            <button class="delete-btn" onclick="todoList.deleteTask(${task.id})">
+                🗑️ Remover
+            </button>
+        </div>
+    `,
+      )
+      .join("");
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text; // Converte <script> em &lt;script&gt;
+    return div.innerHTML; // Retorna texto seguro
+  }
+
+  saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(this.tasks));
+  }
+
+  loadTasks() {
+    const saved = localStorage.getItem("tasks");
+    if (saved) {
+      this.tasks = JSON.parse(saved); // Converte JSON → Array
+      this.render();
+    }
   }
 }
+
+// Cria instância global acessível no onclick dos botões
+const todoList = new TodoList();
